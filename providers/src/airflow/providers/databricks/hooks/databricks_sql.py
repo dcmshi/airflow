@@ -25,17 +25,15 @@ from typing import (
     Any,
     Callable,
     Iterable,
-    List,
-    Optional,
     Mapping,
     Sequence,
     TypeVar,
-    Union,
     cast,
     overload,
 )
 
 from databricks import sql  # type: ignore[attr-defined]
+from databricks.sql.types import Row
 
 from airflow.exceptions import AirflowException, AirflowProviderDeprecationWarning
 from airflow.models.connection import Connection as AirflowConnection
@@ -44,13 +42,12 @@ from airflow.providers.databricks.hooks.databricks_base import BaseDatabricksHoo
 
 if TYPE_CHECKING:
     from databricks.sql.client import Connection
-    from databricks.sql.types import Row
+
 
 LIST_SQL_ENDPOINTS_ENDPOINT = ("GET", "api/2.0/sql/endpoints")
 
 
 T = TypeVar("T")
-
 
 
 class DatabricksSqlHook(BaseDatabricksHook, DbApiHook):
@@ -94,7 +91,7 @@ class DatabricksSqlHook(BaseDatabricksHook, DbApiHook):
         **kwargs,
     ) -> None:
         super().__init__(databricks_conn_id, caller=caller)
-        self._sql_conn: Optional[Connection] = None
+        self._sql_conn: Connection | None = None
         self._token: str | None = None
         self._http_path = http_path
         self._sql_endpoint_name = sql_endpoint_name
@@ -275,7 +272,7 @@ class DatabricksSqlHook(BaseDatabricksHook, DbApiHook):
         else:
             return results
 
-    def _make_common_data_structure(self, result: Union[T, Sequence[T]]) -> Union[tuple[Any, ...], list[tuple[Any, ...]]]:
+    def _make_common_data_structure(self, result: T | Sequence[T]) -> tuple[Any, ...] | list[tuple[Any, ...]]:
         """Transform the databricks Row objects into namedtuple."""
         # Below ignored lines respect namedtuple docstring, but mypy do not support dynamically
         # instantiated namedtuple, and will never do: https://github.com/python/mypy/issues/848
